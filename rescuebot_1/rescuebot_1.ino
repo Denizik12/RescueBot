@@ -2,179 +2,135 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include "controls.h"
 
-// wifi login
-const char *ssid = "";
-const char *password = "";
+// motor server states
+#define MOTOR_STOP_STATE 0
+#define MOTOR_FORWARD_STATE 1
+#define MOTOR_BACKWARD_STATE 2
+#define MOTOR_LEFT_STATE 3
+#define MOTOR_RIGHT_STATE 4
 
-// motor enable pins
-int motorEnablePinLeftBack = D1;  //Nodemcu PWM pin
-int motorEnablePinRightBack = D2; //Nodemcu PWM pin
+// left side pins
+#define FORWARD_LEFT_PIN D0
+#define BACKWARD_LEFT_PIN D1
+#define ENABLE_LEFT_PIN D2
 
-//motor direction pins
-int motorForwardPin1 = 15;
-int motorBackwardPin1 = 13;
-int motorForwardPin2 = 12;
-int motorBackwardPin2 = 14;
+// right side pins
+#define FORWARD_RIGHT_PIN D3
+#define BACKWARD_RIGHT_PIN D4
+#define ENABLE_RIGHT_PIN D5
 
-// server
-WiFiServer server(80);
+// motor forward function
+void motorDirectionForward() {
+  digitalWrite(FORWARD_LEFT_PIN, HIGH);
+  digitalWrite(BACKWARD_LEFT_PIN, LOW);
+  digitalWrite(ENABLE_LEFT_PIN, HIGH);
 
-void setup()
-{
-  Serial.begin(115200);
-  delay(10);
-
-  // set mode direction pins
-  pinMode(motorForwardPin1, OUTPUT);
-  pinMode(motorBackwardPin1, OUTPUT);
-  pinMode(motorForwardPin2, OUTPUT);
-  pinMode(motorBackwardPin2, OUTPUT);
-
-  // connect to WiFi network
-  Serial.println();
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(100);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.println("WiFi connected");
-
-  // forward the server
-  server.begin();
-  Serial.println("Server forwarded");
-  Serial.print(WiFi.localIP());
+  digitalWrite(FORWARD_RIGHT_PIN, HIGH);
+  digitalWrite(BACKWARD_RIGHT_PIN, LOW);
+  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
 }
 
-void loop()
-{
-  // check if client connected
-  WiFiClient client = server.available();
-  if (!client)
-  {
-    return;
+// motor backwards function
+void motorDirectionBackward() {
+  digitalWrite(FORWARD_LEFT_PIN, LOW);
+  digitalWrite(BACKWARD_LEFT_PIN, HIGH);
+  digitalWrite(ENABLE_LEFT_PIN, HIGH);
+
+  digitalWrite(FORWARD_RIGHT_PIN, LOW);
+  digitalWrite(BACKWARD_RIGHT_PIN, HIGH);
+  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
+}
+
+// motor turn left function
+void motorDirectionLeft() {
+  digitalWrite(FORWARD_LEFT_PIN, HIGH);
+  digitalWrite(BACKWARD_LEFT_PIN, LOW);
+  digitalWrite(ENABLE_LEFT_PIN, HIGH);
+
+  digitalWrite(FORWARD_RIGHT_PIN, LOW);
+  digitalWrite(BACKWARD_RIGHT_PIN, HIGH);
+  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
+}
+
+// motor turn right function
+void motorDirectionRight() {
+  digitalWrite(FORWARD_LEFT_PIN, LOW);
+  digitalWrite(BACKWARD_LEFT_PIN, HIGH);
+  digitalWrite(ENABLE_LEFT_PIN, HIGH);
+
+  digitalWrite(FORWARD_RIGHT_PIN, HIGH);
+  digitalWrite(BACKWARD_RIGHT_PIN, LOW);
+  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
+}
+
+// motor stop function
+void motorStop() {
+  digitalWrite(ENABLE_LEFT_PIN, LOW);
+  digitalWrite(ENABLE_RIGHT_PIN, LOW);
+}
+
+// configure wifi
+String wifi_ssid = "Tesla IoT";
+String wifi_password = "fsL6HgjN";
+
+ESP8266WebServer server(80);
+
+void setup() {
+  Serial.begin(115200);
+  server.begin();
+
+  pinMode(FORWARD_LEFT_PIN, OUTPUT);
+  pinMode(BACKWARD_LEFT_PIN, OUTPUT);
+  pinMode(ENABLE_LEFT_PIN, OUTPUT);
+
+  pinMode(FORWARD_RIGHT_PIN, OUTPUT);
+  pinMode(BACKWARD_RIGHT_PIN, OUTPUT);
+  pinMode(ENABLE_RIGHT_PIN, OUTPUT);
+
+  // connect to wifi
+  Serial.print("Connecting to ");
+  Serial.print(wifi_ssid);
+  Serial.println("...");
+  WiFi.begin(wifi_ssid, wifi_password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(100);
   }
+  
+  Serial.println("WIFI connected");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 
-  // wait until the client sends data
-  Serial.println("new client");
-  while (!client.available())
-  {
-    delay(10);
-  }
+  server.on("/", []() {
+    server.send(200, "text/html", controlsHtml);
+  });
 
-  // read the first line of the request
-  String request = client.readStringUntil('\r');
-  Serial.println(request);
-  client.flush();
+  server.on("/api/updateMotor", []() {
+    int motorState = atoi(server.arg("state").c_str());
 
-  int motorOn = 0;
-  int directionMotor = 0;
-  int left = 0;
-  int right = 0;
+    if (motorState == MOTOR_FORWARD_STATE) {
+      motorDirectionForward();
+    }
+    if (motorState == MOTOR_LEFT_STATE) {
+      motorDirectionLeft();
+    }
+    if (motorState == MOTOR_RIGHT_STATE) {
+      motorDirectionRight();
+    }
+    if (motorState == MOTOR_BACKWARD_STATE) {
+      motorDirectionBackward();
+    }
+    if (motorState == MOTOR_STOP_STATE) {
+      motorStop();
+    }
 
-  // forward direction motor
-  if (request.indexOf("/forward=1") != -1)
-  {
-    digitalWrite(motorForwardPin1, HIGH);
-    digitalWrite(motorBackwardPin1, LOW);
-    digitalWrite(motorForwardPin2, HIGH);
-    digitalWrite(motorBackwardPin2, LOW);
-    motorOn = 1;
-    directionMotor = 1;
-  }
+    server.send(200, "application/json", "{\"message\":\"succesfull\"}");
+  });
+}
 
-  // backwards direction motor
-  if (request.indexOf("/backward=1") != -1)
-  {
-    digitalWrite(motorForwardPin1, LOW);
-    digitalWrite(motorBackwardPin1, HIGH);
-    digitalWrite(motorForwardPin2, LOW);
-    digitalWrite(motorBackwardPin2, HIGH);
-    motorOn = 1;
-  }
-
-  // left direction motor
-  if (request.indexOf("/left=1") != -1)
-  {
-    digitalWrite(motorForwardPin1, LOW);
-    digitalWrite(motorBackwardPin1, HIGH);
-    digitalWrite(motorForwardPin2, HIGH);
-    digitalWrite(motorBackwardPin2, LOW);
-    motorOn = 1;
-    left = 1;
-  }
-
-  // right direction motor
-  if (request.indexOf("/right=1") != -1)
-  {
-    digitalWrite(motorForwardPin1, HIGH);
-    digitalWrite(motorBackwardPin1, LOW);
-    digitalWrite(motorForwardPin2, LOW);
-    digitalWrite(motorBackwardPin2, HIGH);
-    motorOn = 1;
-    right = 1;
-  }
-
-  // stop motor
-  if (request.indexOf("/stop=1") != -1)
-  {
-    digitalWrite(motorForwardPin1, LOW);
-    digitalWrite(motorBackwardPin1, LOW);
-    digitalWrite(motorForwardPin2, LOW);
-    digitalWrite(motorBackwardPin2, LOW);
-    motorOn = 0;
-  }
-
-  // Return the response
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/html");
-  client.println("");
-  client.println("<!DOCTYPE HTML>");
-  client.println("<html>");
-  client.println("<h1 align=center> RescueBot 1 </h1><br><br>");
-  client.println("<br><br>");
-  client.println("<a href=\"/forward=1\"\"><button> forward </button></a><br/>");
-  client.println("<a href=\"/backward=1\"\"><button> backward </button></a><br/>");
-  client.println("<a href=\"/left=1\"\"><button> left </button></a><br/>");
-  client.println("<a href=\"/right=1\"\"><button> right </button></a><br/>");
-  client.println("<a href=\"/stop=1\"\"><button> stop </button></a><br/>");
-
-  if (motorOn == 1)
-  {
-    client.println("Motor powered<br/>");
-  }
-  else
-    client.println("Motor halt<br/>");
-
-  if (left == 1)
-  {
-    client.println("turning left<br/>");
-  }
-  else
-    client.println("not turning left<br/>");
-
-  if (right == 1)
-  {
-    client.println("turning right<br/>");
-  }
-  else
-    client.println("not turning right<br/>");
-
-  if (directionMotor == 1)
-  {
-    client.println("Motor rotating in forward direction<br/>");
-  }
-  else
-    client.println("Motor rotating in backward direction<br/>");
-
-  client.println("</html>");
-  delay(10);
-  Serial.println("Client disonnected");
-  Serial.println("");
+void loop() {
+  server.handleClient();
 }
