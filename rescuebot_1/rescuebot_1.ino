@@ -45,23 +45,23 @@ void motorDirectionBackward() {
 
 // motor turn left function
 void motorDirectionLeft() {
-  digitalWrite(FORWARD_LEFT_PIN, HIGH);
-  digitalWrite(BACKWARD_LEFT_PIN, LOW);
-  digitalWrite(ENABLE_LEFT_PIN, HIGH);
-
-  digitalWrite(FORWARD_RIGHT_PIN, LOW);
-  digitalWrite(BACKWARD_RIGHT_PIN, HIGH);
-  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
-}
-
-// motor turn right function
-void motorDirectionRight() {
   digitalWrite(FORWARD_LEFT_PIN, LOW);
   digitalWrite(BACKWARD_LEFT_PIN, HIGH);
   digitalWrite(ENABLE_LEFT_PIN, HIGH);
 
   digitalWrite(FORWARD_RIGHT_PIN, HIGH);
   digitalWrite(BACKWARD_RIGHT_PIN, LOW);
+  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
+}
+
+// motor turn right function
+void motorDirectionRight() {
+  digitalWrite(FORWARD_LEFT_PIN, HIGH);
+  digitalWrite(BACKWARD_LEFT_PIN, LOW);
+  digitalWrite(ENABLE_LEFT_PIN, HIGH);
+
+  digitalWrite(FORWARD_RIGHT_PIN, LOW);
+  digitalWrite(BACKWARD_RIGHT_PIN, HIGH);
   digitalWrite(ENABLE_RIGHT_PIN, HIGH);
 }
 
@@ -72,8 +72,9 @@ void motorStop() {
 }
 
 // configure wifi
-String wifi_ssid = "Tesla IoT";
-String wifi_password = "fsL6HgjN";
+String wifi_ssid = "";
+String wifi_password = "";
+// Tesla IoT fsL6HgjN
 
 ESP8266WebServer server(80);
 
