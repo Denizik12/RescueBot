@@ -12,68 +12,60 @@
 #define MOTOR_RIGHT_STATE 4
 
 // left side pins
-#define FORWARD_LEFT_PIN D0
-#define BACKWARD_LEFT_PIN D1
-#define ENABLE_LEFT_PIN D2
+#define PIN_1 D1
+#define PIN_2 D2
+#define PIN_3 D3
+#define PIN_4 D4
 
-// right side pins
-#define FORWARD_RIGHT_PIN D3
-#define BACKWARD_RIGHT_PIN D4
-#define ENABLE_RIGHT_PIN D5
 
 // motor forward function
 void motorDirectionForward() {
-  digitalWrite(FORWARD_LEFT_PIN, HIGH);
-  digitalWrite(BACKWARD_LEFT_PIN, LOW);
-  digitalWrite(ENABLE_LEFT_PIN, HIGH);
-
-  digitalWrite(FORWARD_RIGHT_PIN, HIGH);
-  digitalWrite(BACKWARD_RIGHT_PIN, LOW);
-  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
+  digitalWrite(PIN_1, HIGH);
+  digitalWrite(PIN_2, LOW);
+  
+  digitalWrite(PIN_3, HIGH);
+  digitalWrite(PIN_4, LOW);
 }
 
 // motor backwards function
 void motorDirectionBackward() {
-  digitalWrite(FORWARD_LEFT_PIN, LOW);
-  digitalWrite(BACKWARD_LEFT_PIN, HIGH);
-  digitalWrite(ENABLE_LEFT_PIN, HIGH);
-
-  digitalWrite(FORWARD_RIGHT_PIN, LOW);
-  digitalWrite(BACKWARD_RIGHT_PIN, HIGH);
-  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
+  digitalWrite(PIN_1, LOW);
+  digitalWrite(PIN_2, HIGH);
+  
+  digitalWrite(PIN_3, LOW);
+  digitalWrite(PIN_4, HIGH);
 }
 
 // motor turn left function
 void motorDirectionLeft() {
-  digitalWrite(FORWARD_LEFT_PIN, LOW);
-  digitalWrite(BACKWARD_LEFT_PIN, HIGH);
-  digitalWrite(ENABLE_LEFT_PIN, HIGH);
-
-  digitalWrite(FORWARD_RIGHT_PIN, HIGH);
-  digitalWrite(BACKWARD_RIGHT_PIN, LOW);
-  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
+  digitalWrite(PIN_1, HIGH);
+  digitalWrite(PIN_2, LOW);
+  
+  digitalWrite(PIN_3, LOW);
+  digitalWrite(PIN_4, HIGH);
 }
 
 // motor turn right function
 void motorDirectionRight() {
-  digitalWrite(FORWARD_LEFT_PIN, HIGH);
-  digitalWrite(BACKWARD_LEFT_PIN, LOW);
-  digitalWrite(ENABLE_LEFT_PIN, HIGH);
-
-  digitalWrite(FORWARD_RIGHT_PIN, LOW);
-  digitalWrite(BACKWARD_RIGHT_PIN, HIGH);
-  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
+  digitalWrite(PIN_1, LOW);
+  digitalWrite(PIN_2, HIGH);
+  
+  digitalWrite(PIN_3, HIGH);
+  digitalWrite(PIN_4, LOW);
 }
 
 // motor stop function
 void motorStop() {
-  digitalWrite(ENABLE_LEFT_PIN, LOW);
-  digitalWrite(ENABLE_RIGHT_PIN, LOW);
+  digitalWrite(PIN_1, LOW);
+  digitalWrite(PIN_2, LOW);
+  
+  digitalWrite(PIN_3, LOW);
+  digitalWrite(PIN_4, LOW);
 }
 
 // configure wifi
-String wifi_ssid = "";
-String wifi_password = "";
+String wifi_ssid = "Tesla IoT";
+String wifi_password = "fsL6HgjN";
 // Tesla IoT fsL6HgjN
 
 ESP8266WebServer server(80);
@@ -82,13 +74,10 @@ void setup() {
   Serial.begin(115200);
   server.begin();
 
-  pinMode(FORWARD_LEFT_PIN, OUTPUT);
-  pinMode(BACKWARD_LEFT_PIN, OUTPUT);
-  pinMode(ENABLE_LEFT_PIN, OUTPUT);
-
-  pinMode(FORWARD_RIGHT_PIN, OUTPUT);
-  pinMode(BACKWARD_RIGHT_PIN, OUTPUT);
-  pinMode(ENABLE_RIGHT_PIN, OUTPUT);
+  pinMode(PIN_1, OUTPUT);
+  pinMode(PIN_2, OUTPUT);
+  pinMode(PIN_3, OUTPUT);
+  pinMode(PIN_4, OUTPUT);
 
   // connect to wifi
   Serial.print("Connecting to ");
@@ -100,7 +89,7 @@ void setup() {
     Serial.print(".");
     delay(100);
   }
-  
+
   Serial.println("WIFI connected");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
