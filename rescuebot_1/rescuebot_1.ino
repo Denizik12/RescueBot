@@ -64,8 +64,8 @@ void motorStop() {
 }
 
 // configure wifi
-String wifi_ssid = "THUIS50    ";
-String wifi_password = "4227141747145985";
+String wifi_ssid = "";
+String wifi_password = "";
 // Tesla IoT fsL6HgjN
 
 ESP8266WebServer server(80);
