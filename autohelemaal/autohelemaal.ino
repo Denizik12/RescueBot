@@ -142,6 +142,7 @@ void loop() {
       turn();
     } else if (distanceFront < 20 && valueLeftSide == 0 && valueRightSide == 0 && valueFrontSide == 0) {
       motorDirectionRight();
+      delay(500);
     }
   } else if (digitalRead(LDR_PIN) == 0) {
     digitalWrite(ledPin, HIGH);
