@@ -3,6 +3,7 @@
 #define IR_PIN_RIGHT 7
 #define IR_PIN_FRONT 6
 
+// kan weg als auto af is
 int ledPin = 13;
 
 // ultrasomotorOn sensor pins
@@ -86,6 +87,7 @@ void motorStop() {
   digitalWrite(PIN_4, LOW);
 }
 
+// interrupt voor tunnel
 void tunnel() {
   tunnelState = 1;
 }
@@ -117,10 +119,12 @@ void setup() {
 void loop() {
   if (digitalRead(LDR_PIN) == 1) {
     digitalWrite(ledPin, LOW);
+    // get values from ir sensor
     valueLeftSide = digitalRead(IR_PIN_LEFT);
     valueRightSide = digitalRead(IR_PIN_RIGHT);
     valueFrontSide = digitalRead(IR_PIN_FRONT);
 
+    // front ultrasonic sensor 
     digitalWrite(TRIG_PIN_FRONT, LOW);
     delayMicroseconds(2);
     digitalWrite(TRIG_PIN_FRONT, HIGH);
@@ -130,8 +134,7 @@ void loop() {
     durationFront = pulseIn(ECHO_PIN_FRONT, HIGH);
     distanceFront = (durationFront / 2) / 29.1;
 
-    Serial.println(distanceFront);
-
+    // if else for bot driving
     if (valueLeftSide == 0 && valueRightSide == 0 && valueFrontSide == 0) {
       motorDirectionForward();
     } else if (valueLeftSide == 1 && valueRightSide == 0 && valueFrontSide == 0) {
@@ -150,6 +153,7 @@ void loop() {
   }
 }
 
+// function that executes when interrupt is triggered
 void ultraSonicTunnel() {
   digitalWrite(TRIG_PIN_LEFT, LOW);
   delayMicroseconds(2);
