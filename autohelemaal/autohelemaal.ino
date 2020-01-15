@@ -124,7 +124,7 @@ void loop() {
     valueRightSide = digitalRead(IR_PIN_RIGHT);
     valueFrontSide = digitalRead(IR_PIN_FRONT);
 
-    // front ultrasonic sensor 
+    // front ultrasonic sensor
     digitalWrite(TRIG_PIN_FRONT, LOW);
     delayMicroseconds(2);
     digitalWrite(TRIG_PIN_FRONT, HIGH);
