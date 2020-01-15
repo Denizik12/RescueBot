@@ -3,13 +3,24 @@
 #define IR_PIN_RIGHT 7
 #define IR_PIN_FRONT 6
 
+int ledPin = 13;
+
 // ultrasomotorOn sensor pins
 #define TRIG_PIN_LEFT 12
 #define ECHO_PIN_LEFT 11
 #define TRIG_PIN_RIGHT 9
 #define ECHO_PIN_RIGHT 10
-#define TRIG_PIN_FRONT 23
-#define ECHO_PIN_FRONT 22
+#define TRIG_PIN_FRONT 26
+#define ECHO_PIN_FRONT 24
+
+// ldr pin
+#define LDR_PIN A0
+
+// motor pins
+#define PIN_1 2
+#define PIN_2 3
+#define PIN_3 4
+#define PIN_4 5
 
 // ir variabels
 int valueLeftSide = 0;
@@ -24,10 +35,8 @@ int distanceRight = 0;
 long durationFront = 0;
 int distanceFront = 0;
 
-#define PIN_1 2
-#define PIN_2 3
-#define PIN_3 4
-#define PIN_4 5
+const byte interruptPin = 2;
+volatile int tunnelState;
 
 unsigned long previousMillis = 0;
 unsigned long previousMillisSecond = 0;
@@ -77,8 +86,15 @@ void motorStop() {
   digitalWrite(PIN_4, LOW);
 }
 
+void tunnel() {
+  tunnelState = 1;
+}
+
 void setup() {
   Serial.begin(9600);
+
+  pinMode(ledPin, OUTPUT);
+
   pinMode(PIN_1, OUTPUT);
   pinMode(PIN_2, OUTPUT);
   pinMode(PIN_3, OUTPUT);
@@ -93,78 +109,72 @@ void setup() {
   pinMode(ECHO_PIN_RIGHT, INPUT);
   pinMode(TRIG_PIN_FRONT, OUTPUT);
   pinMode(ECHO_PIN_FRONT, INPUT);
+
+  pinMode(interruptPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), tunnel, FALLING);
 }
 
 void loop() {
-  valueLeftSide = digitalRead(IR_PIN_LEFT);
-  valueRightSide = digitalRead(IR_PIN_RIGHT);
-  valueFrontSide = digitalRead(IR_PIN_FRONT);
+  if (digitalRead(LDR_PIN) == 1) {
+    digitalWrite(ledPin, LOW);
+    valueLeftSide = digitalRead(IR_PIN_LEFT);
+    valueRightSide = digitalRead(IR_PIN_RIGHT);
+    valueFrontSide = digitalRead(IR_PIN_FRONT);
 
- digitalWrite(TRIG_PIN_FRONT, LOW);
- delayMicroseconds(2);
- digitalWrite(TRIG_PIN_FRONT, HIGH);
- delayMicroseconds(10);
- digitalWrite(TRIG_PIN_FRONT, LOW);
+    digitalWrite(TRIG_PIN_FRONT, LOW);
+    delayMicroseconds(2);
+    digitalWrite(TRIG_PIN_FRONT, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG_PIN_FRONT, LOW);
 
- durationFront = pulseIn(ECHO_PIN_FRONT, HIGH);
- distanceFront = (durationFront / 2) / 29.1;
+    durationFront = pulseIn(ECHO_PIN_FRONT, HIGH);
+    distanceFront = (durationFront / 2) / 29.1;
 
- digitalWrite(TRIG_PIN_LEFT, LOW);
- delayMicroseconds(2);
- digitalWrite(TRIG_PIN_LEFT, HIGH);
- delayMicroseconds(10);
- digitalWrite(TRIG_PIN_LEFT, LOW);
+    Serial.println(distanceFront);
 
- durationLeft = pulseIn(ECHO_PIN_LEFT, HIGH);
- distanceLeft = (durationLeft / 2) / 29.1;;
-
- digitalWrite(TRIG_PIN_RIGHT, LOW);
- delayMicroseconds(2);
- digitalWrite(TRIG_PIN_RIGHT, HIGH);
- delayMicroseconds(10);
- digitalWrite(TRIG_PIN_RIGHT, LOW);
-
- durationRight = pulseIn(ECHO_PIN_RIGHT, HIGH);
- distanceRight = (durationRight / 2) / 29.1;
-
-  Serial.print("left ultra: ");
-  Serial.println(distanceLeft);
-  Serial.print("right ultra: ");
-  Serial.println(distanceRight);
-  Serial.print("front ultra: ");
-  Serial.println(distanceFront);
-
-  if (valueLeftSide == 0 && valueRightSide == 0 && valueFrontSide == 0) {
-    motorDirectionForward();
-  } else if (valueLeftSide == 1 && valueRightSide == 0 && valueFrontSide == 0) {
-    motorDirectionRight();
-  } else if (valueLeftSide == 0 && valueRightSide == 1 && valueFrontSide == 0) {
-    motorDirectionLeft();
-  } else if (valueFrontSide == 1) {
-    turn();
-  } else {
-    motorStop();
+    if (valueLeftSide == 0 && valueRightSide == 0 && valueFrontSide == 0) {
+      motorDirectionForward();
+    } else if (valueLeftSide == 1 && valueRightSide == 0 && valueFrontSide == 0) {
+      motorDirectionRight();
+    } else if (valueLeftSide == 0 && valueRightSide == 1 && valueFrontSide == 0) {
+      motorDirectionLeft();
+    } else if (valueFrontSide == 1) {
+      turn();
+    } else if (distanceFront < 20 && valueLeftSide == 0 && valueRightSide == 0 && valueFrontSide == 0) {
+      motorDirectionRight();
+    }
+  } else if (digitalRead(LDR_PIN) == 0) {
+    digitalWrite(ledPin, HIGH);
+    ultraSonicTunnel();
   }
+}
 
- if (distanceRight > 12 && distanceLeft > 12) {
-   motorDirectionForward();
+void ultraSonicTunnel() {
+  digitalWrite(TRIG_PIN_LEFT, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN_LEFT, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN_LEFT, LOW);
 
- } else if (distanceRight < 12) {
-   motorDirectionLeft();
+  durationLeft = pulseIn(ECHO_PIN_LEFT, HIGH);
+  distanceLeft = (durationLeft / 2) / 29.1;;
 
- } else if (distanceFront < 20) {
-   motorDirectionRight();
-   delay(500);
+  digitalWrite(TRIG_PIN_RIGHT, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN_RIGHT, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN_RIGHT, LOW);
 
- } else if (distanceRight < 12 && distanceLeft < 12) {
-   motorDirectionForward();
+  durationRight = pulseIn(ECHO_PIN_RIGHT, HIGH);
+  distanceRight = (durationRight / 2) / 29.1;
 
- } else if (distanceLeft < 12) {
-   motorDirectionRight();
-
- } else {
-   motorStop();
- }
+  if (distanceRight < 15) {
+    motorDirectionLeft();
+  } else if (distanceLeft < 15) {
+    motorDirectionRight();
+  } else if (distanceRight > 15 && distanceLeft > 15) {
+    motorDirectionForward();
+  }
 }
 
 // function to Turn
@@ -174,9 +184,9 @@ void turn() {
   if (startMillis - previousMillis >= 100) {
     valueFrontSide = digitalRead(IR_PIN_FRONT);
     motorDirectionBackwards();
-    delay(500);
+    delay(600);
     motorDirectionLeft();
-    delay(1750);
+    delay(1800);
     motorDirectionForward();
     previousMillis = startMillis;
     // turn 180
