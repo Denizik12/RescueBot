@@ -100,46 +100,39 @@ void loop() {
   valueRightSide = digitalRead(IR_PIN_RIGHT);
   valueFrontSide = digitalRead(IR_PIN_FRONT);
 
-  //Serial.print("left: ");
-  //Serial.println(valueLeftSide);
-  //Serial.print("right: ");
-  //Serial.println(valueRightSide);
-  //Serial.print("front: ");
-  //Serial.println(valueFrontSide);
+ digitalWrite(TRIG_PIN_FRONT, LOW);
+ delayMicroseconds(2);
+ digitalWrite(TRIG_PIN_FRONT, HIGH);
+ delayMicroseconds(10);
+ digitalWrite(TRIG_PIN_FRONT, LOW);
 
-//  digitalWrite(TRIG_PIN_FRONT, LOW);
-//  delayMicroseconds(2);
-//  digitalWrite(TRIG_PIN_FRONT, HIGH);
-//  delayMicroseconds(10);
-//  digitalWrite(TRIG_PIN_FRONT, LOW);
-//
-//  durationFront = pulseIn(ECHO_PIN_FRONT, HIGH);
-//  distanceFront = (durationFront / 2) / 29.1;
-//
-//  digitalWrite(TRIG_PIN_LEFT, LOW);
-//  delayMicroseconds(2);
-//  digitalWrite(TRIG_PIN_LEFT, HIGH);
-//  delayMicroseconds(10);
-//  digitalWrite(TRIG_PIN_LEFT, LOW);
-//
-//  durationLeft = pulseIn(ECHO_PIN_LEFT, HIGH);
-//  distanceLeft = (durationLeft / 2) / 29.1;;
-//
-//  digitalWrite(TRIG_PIN_RIGHT, LOW);
-//  delayMicroseconds(2);
-//  digitalWrite(TRIG_PIN_RIGHT, HIGH);
-//  delayMicroseconds(10);
-//  digitalWrite(TRIG_PIN_RIGHT, LOW);
-//
-//  durationRight = pulseIn(ECHO_PIN_RIGHT, HIGH);
-//  distanceRight = (durationRight / 2) / 29.1;
+ durationFront = pulseIn(ECHO_PIN_FRONT, HIGH);
+ distanceFront = (durationFront / 2) / 29.1;
 
-  //    Serial.print("left ultra: ");
-  //    Serial.println(distanceLeft);
-  //    Serial.print("right ultra: ");
-  //    Serial.println(distanceRight);
-  //    Serial.print("front ultra: ");
-  //    Serial.println(distanceFront);
+ digitalWrite(TRIG_PIN_LEFT, LOW);
+ delayMicroseconds(2);
+ digitalWrite(TRIG_PIN_LEFT, HIGH);
+ delayMicroseconds(10);
+ digitalWrite(TRIG_PIN_LEFT, LOW);
+
+ durationLeft = pulseIn(ECHO_PIN_LEFT, HIGH);
+ distanceLeft = (durationLeft / 2) / 29.1;;
+
+ digitalWrite(TRIG_PIN_RIGHT, LOW);
+ delayMicroseconds(2);
+ digitalWrite(TRIG_PIN_RIGHT, HIGH);
+ delayMicroseconds(10);
+ digitalWrite(TRIG_PIN_RIGHT, LOW);
+
+ durationRight = pulseIn(ECHO_PIN_RIGHT, HIGH);
+ distanceRight = (durationRight / 2) / 29.1;
+
+  Serial.print("left ultra: ");
+  Serial.println(distanceLeft);
+  Serial.print("right ultra: ");
+  Serial.println(distanceRight);
+  Serial.print("front ultra: ");
+  Serial.println(distanceFront);
 
   if (valueLeftSide == 0 && valueRightSide == 0 && valueFrontSide == 0) {
     motorDirectionForward();
@@ -153,25 +146,25 @@ void loop() {
     motorStop();
   }
 
-//  if (distanceRight > 12 && distanceLeft > 12) {
-//    motorDirectionForward();
-//
-//  } else if (distanceRight < 12) {
-//    motorDirectionLeft();
-//
-//  } else if (distanceFront < 20) {
-//    motorDirectionRight();
-//    delay(500);
-//
-//  } else if (distanceRight < 12 && distanceLeft < 12) {
-//    motorDirectionForward();
-//
-//  } else if (distanceLeft < 12) {
-//    motorDirectionRight();
-//
-//  } else {
-//    motorStop();
-//  }
+ if (distanceRight > 12 && distanceLeft > 12) {
+   motorDirectionForward();
+
+ } else if (distanceRight < 12) {
+   motorDirectionLeft();
+
+ } else if (distanceFront < 20) {
+   motorDirectionRight();
+   delay(500);
+
+ } else if (distanceRight < 12 && distanceLeft < 12) {
+   motorDirectionForward();
+
+ } else if (distanceLeft < 12) {
+   motorDirectionRight();
+
+ } else {
+   motorStop();
+ }
 }
 
 // function to Turn
