@@ -4,6 +4,8 @@
 #include <ESP8266mDNS.h>
 #include "controls.h"
 
+bool autoControl;
+
 // motor server states
 #define MOTOR_STOP_STATE 0
 #define MOTOR_FORWARD_STATE 1
@@ -96,6 +98,14 @@ void setup() {
 
   server.on("/", []() {
     server.send(200, "text/html", controlsHtml);
+  });
+
+  server.on("/api/updateAuto", []() {
+      if (server.arg("auto") == "true") {
+        autoControl = true;
+      } else{
+        autoControl = false;
+      }  
   });
 
   server.on("/api/updateMotor", []() {
