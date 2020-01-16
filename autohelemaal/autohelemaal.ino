@@ -3,8 +3,9 @@
 #define IR_PIN_RIGHT 7
 #define IR_PIN_FRONT 6
 
-// kan weg als auto af is
-int ledPin = 13;
+// front leds
+#define LED_LEFT 13
+#define LED_RIGHT 44
 
 // ultrasomotorOn sensor pins
 #define TRIG_PIN_LEFT 12
@@ -95,7 +96,8 @@ void tunnel() {
 void setup() {
   Serial.begin(9600);
 
-  pinMode(ledPin, OUTPUT);
+  pinMode(LED_LEFT, OUTPUT);
+  pinMode(LED_RIGHT, OUTPUT);
 
   pinMode(PIN_1, OUTPUT);
   pinMode(PIN_2, OUTPUT);
@@ -118,7 +120,9 @@ void setup() {
 
 void loop() {
   if (digitalRead(LDR_PIN) == 1) {
-    digitalWrite(ledPin, LOW);
+    Serial.println(digitalRead(LDR_PIN));
+    digitalWrite(LED_LEFT, LOW);
+    digitalWrite(LED_RIGHT, LOW);
     // get values from ir sensor
     valueLeftSide = digitalRead(IR_PIN_LEFT);
     valueRightSide = digitalRead(IR_PIN_RIGHT);
@@ -148,7 +152,9 @@ void loop() {
       delay(500);
     }
   } else if (digitalRead(LDR_PIN) == 0) {
-    digitalWrite(ledPin, HIGH);
+    Serial.println("in de interrupt");
+    digitalWrite(LED_LEFT, HIGH);
+    digitalWrite(LED_RIGHT, HIGH);
     ultraSonicTunnel();
   }
 }
