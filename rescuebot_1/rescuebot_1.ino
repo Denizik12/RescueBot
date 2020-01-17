@@ -66,8 +66,8 @@ void motorStop() {
 }
 
 // configure wifi
-String wifi_ssid = "";
-String wifi_password = "";
+String wifiSsid = "Tesla IoT";
+String wifiPassword = "fsL6HgjN";
 // Tesla IoT fsL6HgjN
 
 ESP8266WebServer server(80);
@@ -83,13 +83,13 @@ void setup() {
 
   // connect to wifi
   Serial.print("Connecting to ");
-  Serial.print(wifi_ssid);
+  Serial.print(wifiSsid);
   Serial.println("...");
-  WiFi.begin(wifi_ssid, wifi_password);
+  WiFi.begin(wifiSsid, wifiPassword);
 
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
-    delay(100);
+    delay(50);
   }
 
   Serial.println("WIFI connected");

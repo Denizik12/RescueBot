@@ -1,137 +1,213 @@
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
-#include "controls.h"
+// ir pins
+#define IR_PIN_LEFT 8
+#define IR_PIN_RIGHT 7
+#define IR_PIN_FRONT 6
 
-// motor server states
-#define MOTOR_STOP_STATE 0
-#define MOTOR_FORWARD_STATE 1
-#define MOTOR_BACKWARD_STATE 2
-#define MOTOR_LEFT_STATE 3
-#define MOTOR_RIGHT_STATE 4
+// front leds
+#define LED_LEFT 13
+#define LED_RIGHT 44
 
-// left side pins
-#define FORWARD_LEFT_PIN D0
-#define BACKWARD_LEFT_PIN D1
-#define ENABLE_LEFT_PIN D2
+// ultrasomotorOn sensor pins
+#define TRIG_PIN_LEFT 12
+#define ECHO_PIN_LEFT 11
+#define TRIG_PIN_RIGHT 9
+#define ECHO_PIN_RIGHT 10
+#define TRIG_PIN_FRONT 26
+#define ECHO_PIN_FRONT 24
 
-// right side pins
-#define FORWARD_RIGHT_PIN D3
-#define BACKWARD_RIGHT_PIN D4
-#define ENABLE_RIGHT_PIN D5
+// ldr pin
+#define LDR_PIN A0
 
-// motor forward function
-void motorDirectionForward() {
-  digitalWrite(FORWARD_LEFT_PIN, HIGH);
-  digitalWrite(BACKWARD_LEFT_PIN, LOW);
-  digitalWrite(ENABLE_LEFT_PIN, HIGH);
+// motor pins
+#define PIN_1 2
+#define PIN_2 3
+#define PIN_3 4
+#define PIN_4 5
 
-  digitalWrite(FORWARD_RIGHT_PIN, HIGH);
-  digitalWrite(BACKWARD_RIGHT_PIN, LOW);
-  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
+// ir variabels
+int valueLeftSide = 0;
+int valueRightSide = 0;
+int valueFrontSide = 0;
+
+// ultra smotorOnic variables
+long durationLeft = 0;
+int distanceLeft = 0;
+long durationRight = 0;
+int distanceRight = 0;
+long durationFront = 0;
+int distanceFront = 0;
+
+const byte interruptPin = 2;
+volatile int tunnelState;
+
+unsigned long previousMillis = 0;
+unsigned long previousMillisSecond = 0;
+
+// motor forward functimon
+void motorDirectionBackwards() {
+  digitalWrite(PIN_1, HIGH);
+  digitalWrite(PIN_2, LOW);
+
+  digitalWrite(PIN_3, HIGH);
+  digitalWrite(PIN_4, LOW);
 }
 
 // motor backwards function
-void motorDirectionBackward() {
-  digitalWrite(FORWARD_LEFT_PIN, LOW);
-  digitalWrite(BACKWARD_LEFT_PIN, HIGH);
-  digitalWrite(ENABLE_LEFT_PIN, HIGH);
+void motorDirectionForward() {
+  digitalWrite(PIN_1, LOW);
+  digitalWrite(PIN_2, HIGH);
 
-  digitalWrite(FORWARD_RIGHT_PIN, LOW);
-  digitalWrite(BACKWARD_RIGHT_PIN, HIGH);
-  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
-}
-
-// motor turn left function
-void motorDirectionLeft() {
-  digitalWrite(FORWARD_LEFT_PIN, LOW);
-  digitalWrite(BACKWARD_LEFT_PIN, HIGH);
-  digitalWrite(ENABLE_LEFT_PIN, HIGH);
-
-  digitalWrite(FORWARD_RIGHT_PIN, HIGH);
-  digitalWrite(BACKWARD_RIGHT_PIN, LOW);
-  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
+  digitalWrite(PIN_3, LOW);
+  digitalWrite(PIN_4, HIGH);
 }
 
 // motor turn right function
 void motorDirectionRight() {
-  digitalWrite(FORWARD_LEFT_PIN, HIGH);
-  digitalWrite(BACKWARD_LEFT_PIN, LOW);
-  digitalWrite(ENABLE_LEFT_PIN, HIGH);
+  digitalWrite(PIN_1, HIGH);
+  digitalWrite(PIN_2, LOW);
 
-  digitalWrite(FORWARD_RIGHT_PIN, LOW);
-  digitalWrite(BACKWARD_RIGHT_PIN, HIGH);
-  digitalWrite(ENABLE_RIGHT_PIN, HIGH);
+  digitalWrite(PIN_3, LOW);
+  digitalWrite(PIN_4, HIGH);
+}
+
+// motor turn left function
+void motorDirectionLeft() {
+  digitalWrite(PIN_1, LOW);
+  digitalWrite(PIN_2, HIGH);
+
+  digitalWrite(PIN_3, HIGH);
+  digitalWrite(PIN_4, LOW);
 }
 
 // motor stop function
 void motorStop() {
-  digitalWrite(ENABLE_LEFT_PIN, LOW);
-  digitalWrite(ENABLE_RIGHT_PIN, LOW);
+  digitalWrite(PIN_1, LOW);
+  digitalWrite(PIN_2, LOW);
+
+  digitalWrite(PIN_3, LOW);
+  digitalWrite(PIN_4, LOW);
 }
 
-// configure wifi
-String wifi_ssid = "";
-String wifi_password = "";
-// Tesla IoT fsL6HgjN
-
-ESP8266WebServer server(80);
+// interrupt voor tunnel
+void tunnel() {
+  tunnelState = 1;
+}
 
 void setup() {
-  Serial.begin(115200);
-  server.begin();
+  Serial.begin(9600);
 
-  pinMode(FORWARD_LEFT_PIN, OUTPUT);
-  pinMode(BACKWARD_LEFT_PIN, OUTPUT);
-  pinMode(ENABLE_LEFT_PIN, OUTPUT);
+  pinMode(LED_LEFT, OUTPUT);
+  pinMode(LED_RIGHT, OUTPUT);
 
-  pinMode(FORWARD_RIGHT_PIN, OUTPUT);
-  pinMode(BACKWARD_RIGHT_PIN, OUTPUT);
-  pinMode(ENABLE_RIGHT_PIN, OUTPUT);
+  pinMode(PIN_1, OUTPUT);
+  pinMode(PIN_2, OUTPUT);
+  pinMode(PIN_3, OUTPUT);
+  pinMode(PIN_4, OUTPUT);
 
-  // connect to wifi
-  Serial.print("Connecting to ");
-  Serial.print(wifi_ssid);
-  Serial.println("...");
-  WiFi.begin(wifi_ssid, wifi_password);
+  pinMode(IR_PIN_LEFT, INPUT);
+  pinMode(IR_PIN_RIGHT, INPUT);
 
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
-    delay(100);
-  }
-  
-  Serial.println("WIFI connected");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  pinMode(TRIG_PIN_LEFT, OUTPUT);
+  pinMode(ECHO_PIN_LEFT, INPUT);
+  pinMode(TRIG_PIN_RIGHT, OUTPUT);
+  pinMode(ECHO_PIN_RIGHT, INPUT);
+  pinMode(TRIG_PIN_FRONT, OUTPUT);
+  pinMode(ECHO_PIN_FRONT, INPUT);
 
-  server.on("/", []() {
-    server.send(200, "text/html", controlsHtml);
-  });
-
-  server.on("/api/updateMotor", []() {
-    int motorState = atoi(server.arg("state").c_str());
-
-    if (motorState == MOTOR_FORWARD_STATE) {
-      motorDirectionForward();
-    }
-    if (motorState == MOTOR_LEFT_STATE) {
-      motorDirectionLeft();
-    }
-    if (motorState == MOTOR_RIGHT_STATE) {
-      motorDirectionRight();
-    }
-    if (motorState == MOTOR_BACKWARD_STATE) {
-      motorDirectionBackward();
-    }
-    if (motorState == MOTOR_STOP_STATE) {
-      motorStop();
-    }
-
-    server.send(200, "application/json", "{\"message\":\"succesfull\"}");
-  });
+  pinMode(interruptPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), tunnel, FALLING);
 }
 
 void loop() {
-  server.handleClient();
+  if (digitalRead(LDR_PIN) == 1) {
+    Serial.println(digitalRead(LDR_PIN));
+    digitalWrite(LED_LEFT, LOW);
+    digitalWrite(LED_RIGHT, LOW);
+    // get values from ir sensor
+    valueLeftSide = digitalRead(IR_PIN_LEFT);
+    valueRightSide = digitalRead(IR_PIN_RIGHT);
+    valueFrontSide = digitalRead(IR_PIN_FRONT);
+
+    // front ultrasonic sensor
+    digitalWrite(TRIG_PIN_FRONT, LOW);
+    delayMicroseconds(2);
+    digitalWrite(TRIG_PIN_FRONT, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG_PIN_FRONT, LOW);
+
+    durationFront = pulseIn(ECHO_PIN_FRONT, HIGH);
+    distanceFront = (durationFront / 2) / 29.1;
+
+    // if else for bot driving
+    if (valueLeftSide == 0 && valueRightSide == 0 && valueFrontSide == 0) {
+      motorDirectionForward();
+    } else if (valueLeftSide == 1 && valueRightSide == 0 && valueFrontSide == 0) {
+      motorDirectionRight();
+    } else if (valueLeftSide == 0 && valueRightSide == 1 && valueFrontSide == 0) {
+      motorDirectionLeft();
+    } else if (valueFrontSide == 1) {
+      turn();
+    } else if (distanceFront < 20 && valueLeftSide == 0 && valueRightSide == 0 && valueFrontSide == 0) {
+      motorDirectionRight();
+      delay(500);
+    }
+  } else if (digitalRead(LDR_PIN) == 0) {
+    Serial.println("in de interrupt");
+    digitalWrite(LED_LEFT, HIGH);
+    digitalWrite(LED_RIGHT, HIGH);
+    ultraSonicTunnel();
+  }
+}
+
+// function that executes when interrupt is triggered
+void ultraSonicTunnel() {
+  digitalWrite(TRIG_PIN_LEFT, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN_LEFT, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN_LEFT, LOW);
+
+  durationLeft = pulseIn(ECHO_PIN_LEFT, HIGH);
+  distanceLeft = (durationLeft / 2) / 29.1;;
+
+  digitalWrite(TRIG_PIN_RIGHT, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN_RIGHT, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN_RIGHT, LOW);
+
+  durationRight = pulseIn(ECHO_PIN_RIGHT, HIGH);
+  distanceRight = (durationRight / 2) / 29.1;
+
+  if (distanceRight < 15) {
+    motorDirectionLeft();
+  } else if (distanceLeft < 15) {
+    motorDirectionRight();
+  } else if (distanceRight > 15 && distanceLeft > 15) {
+    motorDirectionForward();
+  }
+}
+
+// function to Turn
+void turn() {
+  unsigned long startMillis = millis();
+  // turn 90
+  if (startMillis - previousMillis >= 100) {
+    valueFrontSide = digitalRead(IR_PIN_FRONT);
+    motorDirectionBackwards();
+    delay(600);
+    motorDirectionLeft();
+    delay(1800);
+    motorDirectionForward();
+    previousMillis = startMillis;
+    // turn 180
+    if (valueFrontSide == 1 && startMillis - previousMillisSecond <= 5000) {
+      motorDirectionLeft();
+      delay(2000);
+      motorDirectionForward();
+    } else {
+      previousMillis = startMillis;
+      previousMillisSecond = startMillis;
+    }
+  }
 }
