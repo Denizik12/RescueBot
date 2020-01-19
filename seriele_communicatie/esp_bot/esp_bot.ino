@@ -11,10 +11,11 @@
 #define MOTOR_LEFT_STATE 3
 #define MOTOR_RIGHT_STATE 4
 
+// bool autoState;
 
 // configure wifi
-String wifi_ssid = "Tesla IoT";
-String wifi_password = "fsL6HgjN";
+String wifi_ssid = "";
+String wifi_password = "";
 // Tesla IoT fsL6HgjN
 
 ESP8266WebServer server(80);
@@ -42,6 +43,22 @@ void setup() {
     server.send(200, "text/html", controlsHtml);
   });
 
+//  server.on("/api/updateAuto", []() {
+//    int motorState = atoi(server.arg("state").c_str());
+//
+//    char serial[12];
+//
+//    if (autoState == true) {
+//      serial[8] = 8;
+//    } else if (autoState == false) {
+//      serial[9] = 9;
+//    }
+//
+//    Serial.write(serial, 10);
+//
+//    server.send(200, "application/json", "{\"message\":\"succesfull\"}");
+//  });
+
   server.on("/api/updateMotor", []() {
     int motorState = atoi(server.arg("state").c_str());
 
@@ -49,41 +66,31 @@ void setup() {
 
     if (motorState == MOTOR_FORWARD_STATE) {
       serial[1] = 1;
-    }
-    else
-    {
+    } else {
       serial[1] = 0;
     }
     if (motorState == MOTOR_LEFT_STATE) {
       serial[2] = 1;
-    }
-    else
-    {
+    } else {
       serial[2] = 0;
     }
     if (motorState == MOTOR_RIGHT_STATE) {
       serial[3] = 1;
-    }
-    else
-    {
+    } else {
       serial[3] = 0;
     }
     if (motorState == MOTOR_BACKWARD_STATE) {
       serial[4] = 1;
-    }
-    else
-    {
+    } else {
       serial[4] = 0;
     }
     if (motorState == MOTOR_STOP_STATE) {
       serial[5] = 1;
-    }
-    else
-    {
+    } else {
       serial[5] = 0;
     }
-    
-    Serial.write(serial,6);
+
+    Serial.write(serial, 6);
 
     server.send(200, "application/json", "{\"message\":\"succesfull\"}");
   });

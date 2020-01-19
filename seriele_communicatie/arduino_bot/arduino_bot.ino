@@ -5,14 +5,8 @@
 #define PIN_2 3
 #define PIN_3 4
 #define PIN_4 5
-#define ir_voor 6
-#define ir_links 7
-#define ir_rechts 8
-#define trigPin 9
-#define echoPin 10
 
 char serial[10];
-float duration, distance;
 
 // motor forward function
 void motorDirectionForward() {
@@ -66,28 +60,10 @@ void setup() {
   pinMode(PIN_2, OUTPUT);
   pinMode(PIN_3, OUTPUT);
   pinMode(PIN_4, OUTPUT);
-  pinMode(ir_voor, INPUT);
-  pinMode(ir_links, INPUT);
-  pinMode(ir_rechts, INPUT);
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
 }
 
 void loop() {
-  int voor = 1-digitalRead(ir_voor);
-  int links = 1-digitalRead(ir_links);
-  int rechts = 1-digitalRead(ir_rechts);
 
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-
-  duration = pulseIn(echoPin, HIGH);
-
-  distance = (duration / 2) * 0.0343 -1;
-  
   if (Serial.available() > 0){
 
     Serial.readBytes(serial,6);
@@ -102,7 +78,7 @@ void loop() {
     }
     if (serial[3] == 1) {
       motorDirectionRight();
-      Serial.println("links = 1 wordt ontvangen door de arduino");
+      Serial.println("recht = 1 wordt ontvangen door de arduino");
     }
     if (serial[4] == 1) {
       motorDirectionBackward();
@@ -112,36 +88,5 @@ void loop() {
       motorStop();
       Serial.println("stoppen = 1 wordt ontvangen door de arduino");
     }
-  }
-    else
-    {
-    if(voor == LOW)
-    {
-      motorDirectionBackward();
-      Serial.println("De bot keert om"); 
-    }
-    if(links == LOW)
-    {
-      motorDirectionRight();
-      Serial.println("De bot maakt een bocht naar rechts");
-    }
-    if(rechts == LOW)
-    {
-      motorDirectionLeft();
-      Serial.println("De bot maakt een bocht naar links");
-    }
-    if(distance < 5)
-    {
-      motorDirectionRight();
-      Serial.println("De ultrasoon detecteerd iets en de bot gaat naar rechts");
-    }
-    else
-    {
-      motorDirectionForward();
-      Serial.println("De bot rijdt vooruit");
-    }
-    
-    
-   }
-
-  }
+  }  
+}
