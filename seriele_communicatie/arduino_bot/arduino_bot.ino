@@ -68,23 +68,23 @@ void loop() {
 
     Serial.readBytes(serial,6);
 
-    if (serial[1] == 1) {
+    if (serial[0] == 1) {
       motorDirectionForward();
       Serial.println("vooruit = 1 wordt ontvangen door de arduino");
     }
-    if (serial[2] == 1) {
+    if (serial[1] == 1) {
       motorDirectionLeft();
       Serial.println("links = 1 wordt ontvangen door de arduino");
     }
-    if (serial[3] == 1) {
+    if (serial[2] == 1) {
       motorDirectionRight();
       Serial.println("recht = 1 wordt ontvangen door de arduino");
     }
-    if (serial[4] == 1) {
+    if (serial[3] == 1) {
       motorDirectionBackward();
       Serial.println("achteruit = 1 wordt ontvangen door de arduino");
     }
-    if (serial[5] == 1) {
+    if (serial[4] == 1) {
       motorStop();
       Serial.println("stoppen = 1 wordt ontvangen door de arduino");
     }

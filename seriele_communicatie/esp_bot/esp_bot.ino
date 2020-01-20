@@ -14,8 +14,8 @@
 // bool autoState;
 
 // configure wifi
-String wifi_ssid = "";
-String wifi_password = "";
+String wifi_ssid = "Tesla IoT";
+String wifi_password = "fsL6HgjN";
 // Tesla IoT fsL6HgjN
 
 ESP8266WebServer server(80);
@@ -65,29 +65,34 @@ void setup() {
     char serial[10];
 
     if (motorState == MOTOR_FORWARD_STATE) {
+      serial[0] = 1;
+      Serial.println("voor");
+    } else {
+      serial[0] = 0;
+    }
+    if (motorState == MOTOR_LEFT_STATE) {
       serial[1] = 1;
+      Serial.println("links");
     } else {
       serial[1] = 0;
     }
-    if (motorState == MOTOR_LEFT_STATE) {
+    if (motorState == MOTOR_RIGHT_STATE) {
       serial[2] = 1;
+      Serial.println("rechts");
     } else {
       serial[2] = 0;
     }
-    if (motorState == MOTOR_RIGHT_STATE) {
+    if (motorState == MOTOR_BACKWARD_STATE) {
       serial[3] = 1;
+      Serial.println("achter");
     } else {
       serial[3] = 0;
     }
-    if (motorState == MOTOR_BACKWARD_STATE) {
+    if (motorState == MOTOR_STOP_STATE) {
       serial[4] = 1;
+      Serial.println("stop");
     } else {
       serial[4] = 0;
-    }
-    if (motorState == MOTOR_STOP_STATE) {
-      serial[5] = 1;
-    } else {
-      serial[5] = 0;
     }
 
     Serial.write(serial, 6);
