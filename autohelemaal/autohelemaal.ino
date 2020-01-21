@@ -1,21 +1,26 @@
-// ir pins
+// ir sensor
 #define IR_PIN_LEFT 8
 #define IR_PIN_RIGHT 7
 #define IR_PIN_FRONT 6
 
 // front leds
-#define LED_LEFT 13
+#define LED_LEFT 45
 #define LED_RIGHT 44
 
-// ultrasomotorOn sensor pins
-#define TRIG_PIN_LEFT 12
-#define ECHO_PIN_LEFT 11
-#define TRIG_PIN_RIGHT 9
-#define ECHO_PIN_RIGHT 10
-#define TRIG_PIN_FRONT 26
-#define ECHO_PIN_FRONT 24
+// reed switches
+#define REED_PIN_FRONT A1
+#define REED_PIN_LEFT A2
+#define REED_PIN_RIGHT A3
 
-// ldr pin
+// ultrasomotorOn sensor
+#define TRIG_PIN_LEFT 13
+#define ECHO_PIN_LEFT 12
+#define TRIG_PIN_RIGHT 11
+#define ECHO_PIN_RIGHT 10
+#define TRIG_PIN_FRONT 40
+#define ECHO_PIN_FRONT 42
+
+// ldr sensor
 #define LDR_PIN A0
 
 // motor pins
@@ -24,22 +29,29 @@
 #define PIN_3 4
 #define PIN_4 5
 
+// reed switch variable
+int reedValueFront = 0;
+int reedValueLeft = 0;
+int reedValueRight = 0;
+
 // ir variabels
-int valueLeftSide = 0;
-int valueRightSide = 0;
-int valueFrontSide = 0;
+int irValueLeft = 0;
+int irValueRight = 0;
+int irValueFront = 0;
 
 // ultra smotorOnic variables
-long durationLeft = 0;
-int distanceLeft = 0;
-long durationRight = 0;
-int distanceRight = 0;
-long durationFront = 0;
-int distanceFront = 0;
+long durationLeft;
+int distanceLeft;
+long durationRight;
+int distanceRight;
+long durationFront;
+int distanceFront;
 
+// interrupt variables
 const byte interruptPin = 2;
 volatile int tunnelState;
 
+// timer
 unsigned long previousMillis = 0;
 unsigned long previousMillisSecond = 0;
 
@@ -93,69 +105,27 @@ void tunnel() {
   tunnelState = 1;
 }
 
-void setup() {
-  Serial.begin(9600);
-
-  pinMode(LED_LEFT, OUTPUT);
-  pinMode(LED_RIGHT, OUTPUT);
-
-  pinMode(PIN_1, OUTPUT);
-  pinMode(PIN_2, OUTPUT);
-  pinMode(PIN_3, OUTPUT);
-  pinMode(PIN_4, OUTPUT);
-
-  pinMode(IR_PIN_LEFT, INPUT);
-  pinMode(IR_PIN_RIGHT, INPUT);
-
-  pinMode(TRIG_PIN_LEFT, OUTPUT);
-  pinMode(ECHO_PIN_LEFT, INPUT);
-  pinMode(TRIG_PIN_RIGHT, OUTPUT);
-  pinMode(ECHO_PIN_RIGHT, INPUT);
-  pinMode(TRIG_PIN_FRONT, OUTPUT);
-  pinMode(ECHO_PIN_FRONT, INPUT);
-
-  pinMode(interruptPin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(interruptPin), tunnel, FALLING);
-}
-
-void loop() {
-  if (digitalRead(LDR_PIN) == 1) {
-    Serial.println(digitalRead(LDR_PIN));
-    digitalWrite(LED_LEFT, LOW);
-    digitalWrite(LED_RIGHT, LOW);
-    // get values from ir sensor
-    valueLeftSide = digitalRead(IR_PIN_LEFT);
-    valueRightSide = digitalRead(IR_PIN_RIGHT);
-    valueFrontSide = digitalRead(IR_PIN_FRONT);
-
-    // front ultrasonic sensor
-    digitalWrite(TRIG_PIN_FRONT, LOW);
-    delayMicroseconds(2);
-    digitalWrite(TRIG_PIN_FRONT, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(TRIG_PIN_FRONT, LOW);
-
-    durationFront = pulseIn(ECHO_PIN_FRONT, HIGH);
-    distanceFront = (durationFront / 2) / 29.1;
-
-    // if else for bot driving
-    if (valueLeftSide == 0 && valueRightSide == 0 && valueFrontSide == 0) {
-      motorDirectionForward();
-    } else if (valueLeftSide == 1 && valueRightSide == 0 && valueFrontSide == 0) {
-      motorDirectionRight();
-    } else if (valueLeftSide == 0 && valueRightSide == 1 && valueFrontSide == 0) {
+// function to Turn
+void turn() {
+  unsigned long startMillis = millis();
+  // turn 90
+  if (startMillis - previousMillis >= 100) {
+    irValueFront = digitalRead(IR_PIN_FRONT);
+    motorDirectionBackwards();
+    delay(600);
+    motorDirectionLeft();
+    delay(1800);
+    motorDirectionForward();
+    previousMillis = startMillis;
+    // turn 180
+    if (irValueFront == 1 && startMillis - previousMillisSecond <= 5000) {
       motorDirectionLeft();
-    } else if (valueFrontSide == 1) {
-      turn();
-    } else if (distanceFront < 20 && valueLeftSide == 0 && valueRightSide == 0 && valueFrontSide == 0) {
-      motorDirectionRight();
-      delay(500);
+      delay(2000);
+      motorDirectionForward();
+    } else {
+      previousMillis = startMillis;
+      previousMillisSecond = startMillis;
     }
-  } else if (digitalRead(LDR_PIN) == 0) {
-    Serial.println("in de interrupt");
-    digitalWrite(LED_LEFT, HIGH);
-    digitalWrite(LED_RIGHT, HIGH);
-    ultraSonicTunnel();
   }
 }
 
@@ -179,35 +149,135 @@ void ultraSonicTunnel() {
   durationRight = pulseIn(ECHO_PIN_RIGHT, HIGH);
   distanceRight = (durationRight / 2) / 29.1;
 
-  if (distanceRight < 15) {
+  if (distanceRight < 12) {
     motorDirectionLeft();
-  } else if (distanceLeft < 15) {
+  } else if (distanceLeft < 12) {
     motorDirectionRight();
-  } else if (distanceRight > 15 && distanceLeft > 15) {
+  } else if (distanceRight > 12 && distanceLeft > 12) {
     motorDirectionForward();
   }
 }
 
-// function to Turn
-void turn() {
+// front ultrasonic sensor
+void ultraSonicFront() {
+  // front ultrasonic sensor
+  digitalWrite(TRIG_PIN_FRONT, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN_FRONT, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN_FRONT, LOW);
+  durationFront = pulseIn(ECHO_PIN_FRONT, HIGH);
+  distanceFront = (durationFront / 2) / 29.1;
+
+  if (distanceFront < 20) {
+    obstacle();
+  }
+}
+
+// obstacle avoid
+void obstacle() {
   unsigned long startMillis = millis();
-  // turn 90
+  // turn 90 right
   if (startMillis - previousMillis >= 100) {
-    valueFrontSide = digitalRead(IR_PIN_FRONT);
-    motorDirectionBackwards();
-    delay(600);
-    motorDirectionLeft();
-    delay(1800);
+    irValueFront = digitalRead(IR_PIN_FRONT);
+    motorStop();
+    delay(100);
+    motorDirectionRight();
+    delay(1500);
     motorDirectionForward();
     previousMillis = startMillis;
-    // turn 180
-    if (valueFrontSide == 1 && startMillis - previousMillisSecond <= 5000) {
+    // turn 90 left
+    if (irValueFront == 1 && startMillis - previousMillisSecond <= 5000) {
+      motorStop();
+      delay(100);
       motorDirectionLeft();
-      delay(2000);
+      delay(1500);
       motorDirectionForward();
     } else {
       previousMillis = startMillis;
       previousMillisSecond = startMillis;
     }
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  // reed pin modes
+  pinMode(REED_PIN_FRONT, INPUT);
+  pinMode(REED_PIN_LEFT, INPUT);
+  pinMode(REED_PIN_RIGHT, INPUT);
+
+  // led pin modes
+  pinMode(LED_LEFT, OUTPUT);
+  pinMode(LED_RIGHT, OUTPUT);
+
+  // motor pin modes
+  pinMode(PIN_1, OUTPUT);
+  pinMode(PIN_2, OUTPUT);
+  pinMode(PIN_3, OUTPUT);
+  pinMode(PIN_4, OUTPUT);
+
+  // ir pin modes
+  pinMode(IR_PIN_LEFT, INPUT);
+  pinMode(IR_PIN_RIGHT, INPUT);
+
+  // ultrasoon pin modes
+  pinMode(TRIG_PIN_LEFT, OUTPUT);
+  pinMode(ECHO_PIN_LEFT, INPUT);
+  pinMode(TRIG_PIN_RIGHT, OUTPUT);
+  pinMode(ECHO_PIN_RIGHT, INPUT);
+  pinMode(TRIG_PIN_FRONT, OUTPUT);
+  pinMode(ECHO_PIN_FRONT, INPUT);
+
+  // interrupt pin mode
+  pinMode(interruptPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), tunnel, FALLING);
+}
+
+void loop() {
+  // when ldr is high
+  if (digitalRead(LDR_PIN) == 1) {
+    // Serial.println(digitalRead(LDR_PIN));
+    digitalWrite(LED_LEFT, LOW);
+    digitalWrite(LED_RIGHT, LOW);
+
+    // get values from ir sensor
+    irValueLeft = digitalRead(IR_PIN_LEFT);
+    irValueRight = digitalRead(IR_PIN_RIGHT);
+    irValueFront = digitalRead(IR_PIN_FRONT);
+
+    // get value reed switch
+    reedValueFront = digitalRead(REED_PIN_FRONT);
+    reedValueLeft = digitalRead(REED_PIN_LEFT);
+    reedValueRight = digitalRead(REED_PIN_RIGHT);
+
+    // ultrasonic sensors
+    ultraSonicTunnel();
+    ultraSonicFront();
+
+    // if else for bot driving
+    if (irValueLeft == 0 && irValueRight == 0 && irValueFront == 0) {
+      // Serial.println("voor uit");
+      motorDirectionForward();
+    } else if (irValueLeft == 1 && irValueRight == 0 && irValueFront == 0) {
+      // Serial.println("rechts");
+      motorDirectionRight();
+    } else if (irValueLeft == 0 && irValueRight == 1 && irValueFront == 0) {
+      // Serial.println("links");
+      motorDirectionLeft();
+    } else if (irValueFront == 1) {
+      // Serial.println("90 draai");
+      turn();
+    } else if (reedValueFront == 1 || reedValueLeft == 1 || reedValueRight == 1) {
+      motorStop();
+      Serial.println("stop");
+    }
+
+    // when ldr is low
+  } else if (digitalRead(LDR_PIN) == 0) {
+    // Serial.println(digitalRead(LDR_PIN));
+    digitalWrite(LED_LEFT, HIGH);
+    digitalWrite(LED_RIGHT, HIGH);
+    ultraSonicTunnel();
   }
 }
