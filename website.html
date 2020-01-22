@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <style>
+    .grid-container {
+      background-color: #32a852;
+      grid-template-columns: auto auto auto auto;
+      display: grid;
+      grid-gap: 10px;
+      padding: 50px 50px 50px 50px;
+      float: left;
+      touch-action: manipulation;
+    }
+
+    .grid-item {
+      grid-column-start: 1;
+      grid-column-end: 4;
+      padding: 100px 200px;
+      font-size: 50px;
+
+      cursor: pointer;
+
+    }
+
+    .grid-item1 {
+      grid-column-start: 1;
+      grid-column-end: 2;
+      padding: 100px 200px;
+      font-size: 50px;
+
+      cursor: pointer;
+    }
+
+    .grid-item2 {
+      grid-column-start: 3;
+      grid-column-end: 4;
+      padding: 100px 200px;
+      font-size: 50px;
+      cursor: pointer;
+
+    }
+
+    .grid-item3 {
+      grid-column-start: 1;
+      grid-column-end: 4;
+      padding: 100px 200px;
+      font-size: 50px;
+      cursor: pointer;
+
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+
+    input:checked+.slider {
+      background-color: #2196F3;
+    }
+
+    input:focus+.slider {
+      box-shadow: 0 0 1px #2196F3;
+    }
+
+    input:checked+.slider:before {
+      -webkit-transform: translateX(26px);
+      -ms-transform: translateX(26px);
+      transform: translateX(26px);
+    }
+
+    /* Rounded sliders */
+    .slider.round {
+      border-radius: 34px;
+    }
+
+    .slider.round:before {
+      border-radius: 50%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="grid-container">
+    
+        <button  onclick="newMotorState(5)">controlled</button>
+    
+        <button  onclick="newMotorState(6)">autonomous</button>
+
+    <button class="grid-item" onmousedown="newMotorState(1)" onmouseup="newMotorState(0)">FORWARD</button>
+
+    <button class="grid-item1" onmousedown="newMotorState(3)" onmouseup="newMotorState(0)">LEFT</button>
+
+    <button class="grid-item2" onmousedown="newMotorState(4)" onmouseup="newMotorState(0)">RIGHT</button>
+
+    <button class="grid-item3" onmousedown="newMotorState(2)" onmouseup="newMotorState(0)">BACKWARD</button>
+
+
+  </div>
+
+  <script>
+
+    function newMotorState(state) {
+      var server = new XMLHttpRequest();
+      server.open('GET', '/api/updateMotor?state=' + state, true);
+      server.send();
+    }
+  </script>
+</body>
+
+</html>
