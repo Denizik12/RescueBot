@@ -1,3 +1,7 @@
+// led
+#define LED_LEFT_PIN 44
+#define LED_RIGHT_PIN 45
+
 // ir sensor
 #define IR_PIN_LEFT 8
 #define IR_PIN_RIGHT 7
@@ -102,7 +106,7 @@ void turn() {
     motorDirectionBackwards();
     delay(600);
     motorDirectionLeft();
-    delay(1800);
+    delay(1600);
     motorDirectionForward();
     previousMillis = startMillis;
     // turn 180
@@ -126,15 +130,15 @@ void obstacle() {
     motorStop();
     delay(100);
     motorDirectionRight();
-    delay(1500);
+    delay(1600);
     motorDirectionForward();
     previousMillis = startMillis;
     // turn 90 left
     if (irValueFront == 1 && startMillis - previousMillisSecond <= 5000) {
-      motorStop();
-      delay(100);
+      motorDirectionBackwards();
+      delay(200);
       motorDirectionLeft();
-      delay(1500);
+      delay(1600);
       motorDirectionForward();
     } else {
       previousMillis = startMillis;
@@ -161,6 +165,10 @@ void ultrasonicFront() {
 
 void setup() {
   Serial.begin(9600);
+  // led pin
+  pinMode(LED_LEFT_PIN, OUTPUT);
+  pinMode(LED_RIGHT_PIN, OUTPUT);
+
   // reed pin modes
   pinMode(REED_PIN_FRONT, INPUT);
   pinMode(REED_PIN_LEFT, INPUT);
@@ -186,6 +194,9 @@ void setup() {
 }
 
 void loop() {
+  // leds front
+  digitalWrite(LED_LEFT_PIN, HIGH);
+  digitalWrite(LED_RIGHT_PIN, HIGH);
 
   // get values from ir sensor
   irValueLeft = digitalRead(IR_PIN_LEFT);
