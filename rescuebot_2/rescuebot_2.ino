@@ -3,9 +3,6 @@
 #define IR_PIN_RIGHT A0
 #define IR_PIN_FRONT 13
 
-// reed switches
-#define REED_PIN_FRONT A1
-
 // ultrasomotorOn sensor
 #define TRIG_PIN_LEFT 10
 #define ECHO_PIN_LEFT 11
@@ -19,9 +16,6 @@
 #define PIN_2 3
 #define PIN_3 4
 #define PIN_4 5
-
-// reed switch variable
-int reedValueFront = 0;
 
 // ir variabels
 int irValueLeft = 0;
@@ -130,9 +124,6 @@ void ultrasonicFront() {
 void setup() {
   Serial.begin(9600);
 
-  // reed pin modes
-  pinMode(REED_PIN_FRONT, INPUT);
-
   // motor pin modes
   pinMode(PIN_1, OUTPUT);
   pinMode(PIN_2, OUTPUT);
@@ -190,14 +181,6 @@ void loop() {
   irValueLeft = digitalRead(IR_PIN_LEFT);
   irValueRight = digitalRead(IR_PIN_RIGHT);
   irValueFront = digitalRead(IR_PIN_FRONT);
-
-  // get value reed switch
-  reedValueFront = digitalRead(REED_PIN_FRONT);
-
-  if (reedValueFront == 1) {
-    // Serial.println("stop");
-    motorStop();
-  }
 
   // if else for bot driving
   if (irValueLeft == 0 && irValueRight == 0 && irValueFront == 0) {
