@@ -113,33 +113,6 @@ void turn() {
   }
 }
 
-//// obstacle avoid
-//void obstacle() {
-//  //Serial.println("blok");
-//  unsigned long startMillis = millis();
-//  // turn 90 right
-//  if (startMillis - previousMillis >= 100) {
-//    irValueFront = digitalRead(IR_PIN_FRONT);
-//    motorStop();
-//    delay(100);
-//    motorDirectionRight();
-//    delay(1500);
-//    motorDirectionForward();
-//    previousMillis = startMillis;
-//    // turn 90 left
-//    if (irValueFront == 1 && startMillis - previousMillisSecond <= 3000) {
-//      motorDirectionBackwards();
-//      delay(200);
-//      motorDirectionLeft();
-//      delay(1500);
-//      motorDirectionForward();
-//    } else {
-//      previousMillis = startMillis;
-//      previousMillisSecond = startMillis;
-//    }
-//  }
-//}
-
 void ultrasonicFront() {
   // get value front ultrasonic sensor
   digitalWrite(TRIG_PIN_FRONT, LOW);
@@ -155,7 +128,7 @@ void ultrasonicFront() {
     //Serial.println("obstakel");
     motorDirectionRight();
     delay(250);
-  } 
+  }
 }
 
 void setup() {
@@ -175,6 +148,7 @@ void setup() {
   // ir pin modes
   pinMode(IR_PIN_LEFT, INPUT);
   pinMode(IR_PIN_RIGHT, INPUT);
+  pinMode(IR_PIN_FRONT, INPUT);
 
   // ultrasoon pin modes
   pinMode(TRIG_PIN_LEFT, OUTPUT);
@@ -186,9 +160,6 @@ void setup() {
 }
 
 void loop() {
-  // front ultrasonic
-  ultrasonicFront();
-
   // get value right ultrasonic sensor
   digitalWrite(TRIG_PIN_RIGHT, LOW);
   delayMicroseconds(2);
@@ -218,6 +189,9 @@ void loop() {
     //Serial.println("draai rechts");
     motorDirectionRight();
   }
+
+  // front ultrasonic
+  ultrasonicFront();
 
   // get values from ir sensor
   irValueLeft = digitalRead(IR_PIN_LEFT);
