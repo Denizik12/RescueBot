@@ -1,9 +1,9 @@
-// ir sensor
+// ir sensor pins
 #define IR_PIN_LEFT A2
 #define IR_PIN_RIGHT A0
 #define IR_PIN_FRONT A1
 
-// ultrasomotorOn sensor
+// ultrasonic sensor pins
 #define TRIG_PIN_LEFT 8
 #define ECHO_PIN_LEFT 9
 #define TRIG_PIN_RIGHT 10
@@ -23,16 +23,16 @@ int irValueRight = 0;
 int irValueFront = 0;
 
 // ultra smotorOnic variables
-long durationLeft;
-int distanceLeft;
-long durationRight;
-int distanceRight;
-long durationFront;
-int distanceFront;
+long durationLeft, durationRight, durationFront;
+int distanceLeft, distanceRight, distanceFront;
 
-// timer
+// timer variables
 unsigned long previousMillis = 0;
 unsigned long previousMillisSecond = 0;
+
+// communication
+char serial [10];
+boolean manualMode = false;
 
 // motor forward functimon
 void motorDirectionBackwards() {
@@ -86,15 +86,15 @@ void turn() {
   if (startMillis - previousMillis >= 100) {
     irValueFront = digitalRead(IR_PIN_FRONT);
     motorDirectionBackwards();
-    delay(250);
+    delay(350);
     motorDirectionLeft();
-    delay(1100);
+    delay(1300);
     motorDirectionForward();
     previousMillis = startMillis;
     // turn 180
     if (irValueFront == 1 && startMillis - previousMillisSecond <= 5000) {
       motorDirectionLeft();
-      delay(2100);
+      delay(1750);
       motorDirectionForward();
     } else {
       previousMillis = startMillis;
@@ -103,6 +103,7 @@ void turn() {
   }
 }
 
+// front ultrasonic sensor
 void ultrasonicFront() {
   // get value front ultrasonic sensor
   digitalWrite(TRIG_PIN_FRONT, LOW);
@@ -111,18 +112,48 @@ void ultrasonicFront() {
   delayMicroseconds(10);
   digitalWrite(TRIG_PIN_FRONT, LOW);
   durationFront = pulseIn(ECHO_PIN_FRONT, HIGH);
-  distanceFront = (durationFront / 2) / 29.1;
-  //Serial.println(distanceFront);
+  distanceFront = (durationFront / 2) / 29.1; // calculate to cm
 
   if (distanceFront < 30) {
-    //Serial.println("obstakel");
     motorDirectionLeft();
-    delay(250);
+    delay(400);
+  }
+}
+
+// left ultrasonic sensor
+void ultrasonicLeft() {
+  // get value front ultrasonic sensor
+  digitalWrite(TRIG_PIN_LEFT, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN_LEFT, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN_LEFT, LOW);
+  durationLeft = pulseIn(ECHO_PIN_LEFT, HIGH);
+  distanceLeft = (durationFront / 2) / 29.1; // calculate to cm
+
+  if (distanceLeft < 5) {
+    motorDirectionRight();
+  }
+}
+
+// right ultrasonic sensor
+void ultrasonicRight() {
+  // get value front ultrasonic sensor
+  digitalWrite(TRIG_PIN_RIGHT, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN_RIGHT, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN_RIGHT, LOW);
+  durationRight = pulseIn(ECHO_PIN_RIGHT, HIGH);
+  distanceRight = (durationRight / 2) / 29.1; // calculate to cm
+
+  if (distanceRight < 5) {
+    motorDirectionLeft();
   }
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   // motor pin modes
   pinMode(PIN_1, OUTPUT);
@@ -144,56 +175,62 @@ void setup() {
 }
 
 void loop() {
-  // get value right ultrasonic sensor
-  digitalWrite(TRIG_PIN_RIGHT, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIG_PIN_RIGHT, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIG_PIN_RIGHT, LOW);
+  // serial communication
+  if (Serial.available() > 0) {
 
-  durationRight = pulseIn(ECHO_PIN_RIGHT, HIGH);
-  distanceRight = (durationRight / 2) / 29.1;
+    Serial.readBytes(serial, 7);
 
-  if (distanceRight < 5) {
-    //Serial.println("draai links");
-    motorDirectionLeft();
+    // switch between manualMode and autonomous
+    if (serial[6] == 0)    {
+      manualMode = true;
+    }
+    if (serial[6] == 1)   {
+      manualMode = false;
+    }
   }
 
-  // get value left ultrasonic sensor
-  digitalWrite(TRIG_PIN_LEFT, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIG_PIN_LEFT, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIG_PIN_LEFT, LOW);
+  // get the bytes from esp if manualMode is on
+  if (manualMode == true) {
 
-  durationLeft = pulseIn(ECHO_PIN_LEFT, HIGH);
-  distanceLeft = (durationLeft / 2) / 29.1;
-
-  if (distanceLeft < 5) {
-    //Serial.println("draai rechts");
-    motorDirectionRight();
+    if (serial[1] == 1) {
+      motorDirectionForward();
+    }
+    if (serial[0] == 1) {
+      motorDirectionLeft();
+    }
+    if (serial[3] == 1) {
+      motorDirectionRight();
+    }
+    if (serial[4] == 1) {
+      motorDirectionBackwards();
+    }
+    if (serial[5] == 1) {
+      motorStop();
+    }
   }
 
-  // front ultrasonic
-  ultrasonicFront();
+  // if manual mode is off drive autonomous
+  if (manualMode == false) {
 
-  // get values from ir sensor
-  irValueLeft = digitalRead(IR_PIN_LEFT);
-  irValueRight = digitalRead(IR_PIN_RIGHT);
-  irValueFront = digitalRead(IR_PIN_FRONT);
+    // ultrasonic sensors
+    ultrasonicFront();
+    ultrasonicRight();
+    ultrasonicLeft();
 
-  // if else for bot driving
-  if (irValueLeft == 0 && irValueRight == 0 && irValueFront == 0) {
-    //Serial.println("voor uit");
-    motorDirectionForward();
-  } else if (irValueLeft == 1 && irValueRight == 0 && irValueFront == 0) {
-    //Serial.println("rechts");
-    motorDirectionRight();
-  } else if (irValueLeft == 0 && irValueRight == 1 && irValueFront == 0) {
-    //Serial.println("links");
-    motorDirectionLeft();
-  } else if (irValueFront == 1) {
-    //Serial.println("90 draai");
-    turn();
+    // get values from ir sensor
+    irValueLeft = digitalRead(IR_PIN_LEFT);
+    irValueRight = digitalRead(IR_PIN_RIGHT);
+    irValueFront = digitalRead(IR_PIN_FRONT);
+
+    // if else for bot driving
+    if (irValueLeft == 0 && irValueRight == 0 && irValueFront == 0) {
+      motorDirectionForward();
+    } else if (irValueLeft == 1 && irValueRight == 0 && irValueFront == 0) {
+      motorDirectionRight();
+    } else if (irValueLeft == 0 && irValueRight == 1 && irValueFront == 0) {
+      motorDirectionLeft();
+    } else if (irValueFront == 1) {
+      turn();
+    }
   }
 }

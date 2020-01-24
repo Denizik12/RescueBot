@@ -1,0 +1,1 @@
+xxd -i qsdxz.html > qsdxz.h

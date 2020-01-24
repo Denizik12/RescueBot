@@ -11,14 +11,18 @@
 #define MOTOR_LEFT_STATE 3
 #define MOTOR_RIGHT_STATE 4
 
- bool autoState;
- char serial[10];
+// bot control states
+#define CONTROLLED_STATE 5
+#define AUTONOMOUS_STATE 6
+
+// serial char array
+char serial[10] {0, 0, 0, 0, 0, 1, 0};
 
 // configure wifi
 String wifi_ssid = "Tesla IoT";
 String wifi_password = "fsL6HgjN";
-// Tesla IoT fsL6HgjN
 
+// esp webserver
 ESP8266WebServer server(80);
 
 void setup() {
@@ -45,29 +49,29 @@ void setup() {
   });
 
   server.on("/api/updateAuto", []() {
-    int motorState = atoi(server.arg("state").c_str());
-
-    if (autoState == true) {
-      serial[6] = 1;
-    } else if (autoState == false) {
-      serial[6] = 0;
-    }
 
     server.send(200, "application/json", "{\"message\":\"succesfull\"}");
-    });
+  });
 
   server.on("/api/updateMotor", []() {
     int motorState = atoi(server.arg("state").c_str());
-
+    if (motorState == CONTROLLED_STATE) {
+      serial[6] = 0;
+      Serial.println("bestuurd");
+    }
+    if (motorState == AUTONOMOUS_STATE) {
+      serial[6] = 1;
+      Serial.println("autonoom");
+    }
     if (motorState == MOTOR_FORWARD_STATE) {
       serial[1] = 1;
     } else {
       serial[1] = 0;
     }
     if (motorState == MOTOR_LEFT_STATE) {
-      serial[2] = 1;
+      serial[0] = 1;
     } else {
-      serial[2] = 0;
+      serial[0] = 0;
     }
     if (motorState == MOTOR_RIGHT_STATE) {
       serial[3] = 1;
@@ -92,5 +96,6 @@ void setup() {
 }
 
 void loop() {
+  // keep esp online
   server.handleClient();
 }
