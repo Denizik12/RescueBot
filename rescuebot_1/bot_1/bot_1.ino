@@ -243,6 +243,7 @@ void loop() {
     ultrasonicLeft();
     ultrasonicRight();
 
+    // when read detects a megnet stop the car
     if (reedValueFront == 1 || reedValueLeft == 1 || reedValueRight == 1) {
       motorStop();
     }
